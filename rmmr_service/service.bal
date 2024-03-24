@@ -3,6 +3,12 @@ import ballerina/sql;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
 
+configurable string USER = ?;
+configurable string PASSWORD = ?;
+configurable string HOST = ?;
+configurable int PORT = ?;
+configurable string DATABASE = ?;
+
 // The `Room` record to load records from `Rooms` table.
 type Room record {|
     string id;
@@ -38,17 +44,16 @@ type CreateBooking record {|
     string message;
 |};
 
-
-
 service / on new http:Listener(8080) {
+
     private final mysql:Client db;
 
-    
-
     function init() returns error? {
+
         // Initiate the mysql client at the start of the service. This will be used
         // throughout the lifetime of the service.
-        self.db = check new ("sql6.freesqldatabase.com", "sql6693962", "VEhKY47ZDU", "sql6693962", 3306);
+        //self.db = check new ("sql6.freesqldatabase.com", "sql6693962", "VEhKY47ZDU", "sql6693962", 3306);
+        self.db = check new (host=HOST, user=USER, password=PASSWORD, port=PORT, database=DATABASE);
     }
 
     resource function get get_rooms() returns Room[]|error {
