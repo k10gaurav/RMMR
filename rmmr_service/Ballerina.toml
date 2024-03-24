@@ -1,0 +1,8 @@
+[package]
+org = "kumargaurav"
+name = "rmmr_service"
+version = "0.1.0"
+distribution = "2201.8.5"
+
+[build-options]
+observabilityIncluded = true
