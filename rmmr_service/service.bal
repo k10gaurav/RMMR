@@ -38,10 +38,35 @@ type Response record {|
     string message;
 |};
 
-
+//Room Booking Schema
+type Bookings record {|
+    int id;
+    int room_id;
+    int attendees;
+    string reason;
+    int booked_by;
+    string start_time;
+    string end_time;
+    string resources;
+    string booking_status;
+    int created_by;
+    string created_date;
+    int modified_by;
+    string modified_date;
+|};
 type CreateBooking record {|
-    int code;
-    string message;
+    int room_id;
+    int attendees;
+    string reason;
+    int booked_by;
+    string start_time;
+    string end_time;
+    string resources;
+|};
+type CreateBookingResponse record {|
+     int code;
+     string message;
+     int booking_id;
 |};
 
 service / on new http:Listener(8080) {
@@ -81,7 +106,7 @@ service / on new http:Listener(8080) {
         // Check if record is available or not
         if result is sql:NoRowsError {
             //return http:NOT_FOUND;
-            Response response={"code":200,"message":"No room found with id "+id};
+            Response response={"code":400,"message":"No room found with id "+id};
             return response;
         } else {
             return result;
@@ -102,5 +127,49 @@ service / on new http:Listener(8080) {
         _ = check self.db->execute(`update rooms set status='inactive', available='no' WHERE id = ${id}`);
         Response response={"code":204,"message":"Room deleted successfully"};
         return response;
+    }
+
+    resource function post book_room(CreateBooking booking) returns CreateBookingResponse|error|int {
+       sql:ExecutionResult result = check self.db->execute(`
+            INSERT INTO bookings (room_id, attendees, reason, booked_by, start_time, end_time,resources)
+            VALUES (${booking.room_id},${booking.attendees}, ${booking.reason}, ${booking.booked_by}, ${booking.start_time}, ${booking.end_time},${booking.resources});`);
+        
+          int|string? lastInsertId = result.lastInsertId;
+            if lastInsertId is int {
+                lastInsertId=lastInsertId;
+            } else {
+                return error("Unable to obtain last insert ID");
+            }
+            CreateBookingResponse response={"code":201,"message":"Booking created successfully","booking_id":<int>lastInsertId};
+            return response;
+    }
+
+     resource function put booking_confirm/[string id]() returns json|http:NotFound|error {
+        //io:println(id);
+        _ = check self.db->execute(`update bookings set booking_status='booked', modified_date=CURRENT_TIMESTAMP WHERE id = ${id}`);
+        Response response={"code":200,"message":"Booking confirmed successfully"};
+        return response;
+    }
+    
+     resource function delete booking_cancel/[string id]() returns json|http:NotFound|error {
+        //io:println(id);
+        _ = check self.db->execute(`update bookings set booking_status='canceled', modified_date=CURRENT_TIMESTAMP WHERE id = ${id}`);
+        Response response={"code":204,"message":"Booking canceled successfully"};
+        return response;
+    }
+    
+
+    resource function get booking_status/[string id]() returns Bookings|Response|http:NotFound|error {
+        // Execute simple query to fetch record with requested id.
+        Bookings|sql:Error result = self.db->queryRow(`SELECT * FROM bookings WHERE id = ${id}`);
+
+        // Check if record is available or not
+        if result is sql:NoRowsError {
+            //return http:NOT_FOUND;
+            Response response={"code":400,"message":"No booking found with id "+id};
+            return response;
+        } else {
+            return result;
+        }
     }
 }
