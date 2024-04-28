@@ -172,9 +172,9 @@ service / on new http:Listener(8080) {
             return result;
         }
     }
-    resource function get bookings/[string id]() returns Bookings|Response|http:NotFound|error {
+    resource function get bookings_by_id/[string id]() returns Bookings|Response|http:NotFound|error {
         // Execute simple query to fetch record with requested id.
-        Room|sql:Error result = self.db->queryRow(`SELECT * FROM bookings WHERE created_by = ${id}`);
+        Bookings|sql:Error result = self.db->queryRow(`SELECT * FROM bookings WHERE created_by = ${id}`);
 
         // Check if record is available or not
         if result is sql:NoRowsError {
