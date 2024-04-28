@@ -58,7 +58,7 @@ type CreateBooking record {|
     int room_id;
     int attendees;
     string reason;
-    int booked_by;
+    string booked_by;
     string start_time;
     string end_time;
     string resources;
