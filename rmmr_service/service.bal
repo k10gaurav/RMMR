@@ -172,17 +172,10 @@ service / on new http:Listener(8080) {
             return result;
         }
     }
-    resource function get bookings_by_id/[string id]() returns Bookings|Response|http:NotFound|error {
-        // Execute simple query to fetch record with requested id.
-        Bookings|sql:Error result = self.db->queryRow(`SELECT * FROM bookings WHERE booked_by = ${id}`);
-
-        // Check if record is available or not
-        if result is sql:NoRowsError {
-            //return http:NOT_FOUND;
-            Response response={"code":400,"message":"No bookings found for id "+id};
-            return response;
-        } else {
-            return result;
-        }
+    resource function get bookings_by_id/[string id]() returns Bookings[]|error {
+        // Execute simple query to retrieve all records from the `bookings` table by user id
+       stream<Bookings, sql:Error?> BookingStream = self.db->query(`SELECT * FROM bookings WHERE booked_by = ${id}`);
+        return from Bookings Bookings in BookingStream
+            select Bookings;
     }
 }
