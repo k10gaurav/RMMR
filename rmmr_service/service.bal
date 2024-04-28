@@ -44,7 +44,7 @@ type Bookings record {|
     int room_id;
     int attendees;
     string reason;
-    int booked_by;
+    string booked_by;
     string start_time;
     string end_time;
     string resources;
@@ -167,6 +167,19 @@ service / on new http:Listener(8080) {
         if result is sql:NoRowsError {
             //return http:NOT_FOUND;
             Response response={"code":400,"message":"No booking found with id "+id};
+            return response;
+        } else {
+            return result;
+        }
+    }
+    resource function get bookings/[string id]() returns Bookings|Response|http:NotFound|error {
+        // Execute simple query to fetch record with requested id.
+        Room|sql:Error result = self.db->queryRow(`SELECT * FROM bookings WHERE created_by = ${id}`);
+
+        // Check if record is available or not
+        if result is sql:NoRowsError {
+            //return http:NOT_FOUND;
+            Response response={"code":400,"message":"No bookings found for id "+id};
             return response;
         } else {
             return result;
